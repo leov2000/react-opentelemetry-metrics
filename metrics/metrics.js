@@ -1,4 +1,3 @@
-import React, { useEffect } from "react";
 import { Resource } from "@opentelemetry/resources";
 import {
   DiagConsoleLogger,
@@ -25,17 +24,17 @@ const consoleExporter = new ConsoleMetricExporter();
 
 const metricReader = new PeriodicExportingMetricReader({
   exporter: consoleExporter,
-  exportIntervalMillis: 1000,
+  exportIntervalMillis: 5000,
 });
 
-export const meterProvider = new MeterProvider({
-  resource: resource,
+const meterProvider = new MeterProvider({
+  resource,
   readers: [metricReader],
 });
 
 metrics.setGlobalMeterProvider(meterProvider);
 
-export const meter = meterProvider.getMeter("example-app");
+const meter = meterProvider.getMeter("example-app");
 
 export const requestCounter = meter.createCounter("page_views", {
   description: "Counts the number of page views",
@@ -50,22 +49,8 @@ export const customEventCounter = meter.createCounter("custom_events", {
   description: "Counts custom events triggered by users",
 });
 
-function MetricsProvider({ children }) {
-  useEffect(() => {
-    console.log("OpenTelemetry metrics initialized");
-
-    // Cleanup when component unmounts
-    return () => {
-      meterProvider
-        .shutdown()
-        .then(() => console.log("Metrics provider shutdown complete"))
-        .catch((err) =>
-          console.error("Error shutting down metrics provider", err)
-        );
-    };
-  }, []);
-
-  return <>{children}</>;
+export async function shutdownMetrics() {
+  console.log("Manually shutting down metrics provider...");
+  await meterProvider.shutdown();
+  console.log("Metrics provider shutdown complete.");
 }
-
-export { MetricsProvider };
